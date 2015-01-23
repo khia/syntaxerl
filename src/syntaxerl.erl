@@ -25,15 +25,21 @@ main(["-d"]) ->
 main(["--debug"]) ->
     usage();
 main([FileName]) ->
-    check_syntax(FileName, false);
+    check_syntax(FileName, [{debug, false}]);
 main([FileName, "-d"]) ->
-    check_syntax(FileName, true);
+    check_syntax(FileName,  [{debug, true}]);
 main(["-d", FileName]) ->
-    check_syntax(FileName, true);
+    check_syntax(FileName,  [{debug, true}]);
 main([FileName, "--debug"]) ->
-    check_syntax(FileName, true);
+    check_syntax(FileName,  [{debug, true}]);
 main(["--debug", FileName]) ->
-    check_syntax(FileName, true);
+    check_syntax(FileName,  [{debug, true}]);
+main(["--debug", ProjectDir, FileName]) ->
+    check_syntax(FileName, [{project_dir, ProjectDir}, {debug, true}]);
+main([ProjectDir, FileName, "--debug"]) ->
+    check_syntax(FileName, [{project_dir, ProjectDir}, {debug, true}]);
+main([ProjectDir, FileName]) ->
+    check_syntax(FileName, [{project_dir, ProjectDir}]);
 main(_) ->
     usage().
 
@@ -41,13 +47,14 @@ main(_) ->
 %% Internal
 %% ===================================================================
 
-check_syntax(FileName, Debug) ->
+check_syntax(FileName, Options) ->
+    Debug = proplists:get_bool(debug, Options),
     ScriptName = escript:script_name(),
     HandlerPatterns = handler_patterns(ScriptName),
     syntaxerl_logger:debug(Debug, "Handler patterns: ~p", [HandlerPatterns]),
     Handler = choose_handler(FileName, HandlerPatterns),
     syntaxerl_logger:debug(Debug, "Selected handler: ~p", [Handler]),
-    case Handler:check_syntax(FileName, Debug) of
+    case Handler:check_syntax(FileName, Options) of
         {ok, Issues} ->
             syntaxerl_utils:print_issues(FileName, Issues);
         {error, Issues} ->
@@ -58,6 +65,7 @@ usage() ->
     ScriptName = escript:script_name(),
     BaseName = filename:basename(ScriptName),
     io:format("Usage: ~s [-d] filename~n", [BaseName]),
+    io:format("Usage: ~s [-d] project_dir filename~n", [BaseName]),
     io:format("Usage: ~s [-h]~n", [BaseName]),
     case description_vsn(ScriptName) of
         {Description, Vsn} ->

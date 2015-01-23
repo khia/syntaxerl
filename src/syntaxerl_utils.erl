@@ -2,7 +2,7 @@
 -author("Dmitry Klionsky <dm.klionsky@gmail.com>").
 
 -export([
-    incls_deps_opts/1,
+    incls_deps_opts/2,
     error_description/1,
     print_issues/2
 ]).
@@ -13,11 +13,10 @@
 %% API
 %% ===================================================================
 
--spec incls_deps_opts(FileName::file:filename()) ->
+-spec incls_deps_opts(FileName::file:filename(), [Options::proplists:property()]) ->
     {InclDirs::[file:name()], EbinDirs::[file:name()], ErlcOpts::[term()]}.
-incls_deps_opts(FileName) ->
-    AbsFileName = filename:absname(FileName),
-    BaseDir = filename:dirname(filename:dirname(AbsFileName)),
+incls_deps_opts(FileName, Options) ->
+    BaseDir = base_dir(FileName, Options),
 
     StdOtpDirs = absdirs(BaseDir, ["./include", "./deps"]),
     StdErlcOpts = [
@@ -45,6 +44,13 @@ incls_deps_opts(FileName) ->
     {_, EbinDirs} = lists:mapfoldr(fun(Dir, Acc) -> {0, filelib:wildcard(Dir ++ "/*/ebin") ++ Acc} end, [], DepsDirs),
     IncludeDirs = lists:map(fun(Dir) -> {i, Dir} end, DepsDirs),
     {IncludeDirs, EbinDirs, ErlcOpts}.
+
+base_dir(FileName, Options) ->
+    AbsFileName = filename:absname(FileName),
+    case proplists:get_value(project_dir, Options) of
+	undefined -> filename:dirname(filename:dirname(AbsFileName));
+	Dir -> Dir
+    end.
 
 -spec deps_opts(BaseDir::file:name(), OtpStdDirs::[file:name()], ErlcStdOpts::[term()]) -> {[file:name()], [term()]}.
 deps_opts(BaseDir, OtpStdDirs, ErlcStdOpts) ->

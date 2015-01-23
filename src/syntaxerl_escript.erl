@@ -10,7 +10,8 @@
 %% API
 %% ===================================================================
 
-check_syntax(FileName, Debug) ->
+check_syntax(FileName, Options) ->
+    Debug = proplists:get_bool(debug, Options),
     case file:read_file(FileName) of
         {ok, Content} ->
             %% replace shebang line with module definition.
@@ -19,7 +20,7 @@ check_syntax(FileName, Debug) ->
             NewFileName = filename:rootname(FileName, ".erl") ++ "_fixed.erl",
             case file:write_file(NewFileName, NewContent) of
                 ok ->
-                    {InclDirs, DepsDirs, ErlcOpts} = syntaxerl_utils:incls_deps_opts(FileName),
+                    {InclDirs, DepsDirs, ErlcOpts} = syntaxerl_utils:incls_deps_opts(FileName, Options),
                     syntaxerl_logger:debug(Debug, "Include dirs: ~p", [InclDirs]),
                     syntaxerl_logger:debug(Debug, "Deps dirs: ~p", [DepsDirs]),
                     syntaxerl_logger:debug(Debug, "Erlc opts: ~p", [ErlcOpts]),
