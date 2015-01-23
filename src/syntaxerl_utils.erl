@@ -18,7 +18,7 @@
 incls_deps_opts(FileName, Options) ->
     BaseDir = base_dir(FileName, Options),
 
-    StdOtpDirs = absdirs(BaseDir, ["./include", "./deps"]),
+    StdOtpDirs = absdirs(BaseDir, ["./include", "./deps", "./src", "./apps"]),
     StdErlcOpts = [
         strong_validation,
 
